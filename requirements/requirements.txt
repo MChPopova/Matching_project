@@ -1,0 +1,3 @@
+alphabet-detector
+thefuzz[speedup]
+translate

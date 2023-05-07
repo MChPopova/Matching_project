@@ -1,0 +1,6 @@
+-r requirements/requirements.txt
+pre-commit
+pytest
+black
+flake8
+isort
