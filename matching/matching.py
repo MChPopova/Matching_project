@@ -12,7 +12,18 @@ logging.root.setLevel(logging.NOTSET)
 logger = logging.getLogger("Matching")
 
 
-class Matching:
+class DataMatcher:
+    """
+    Class that performs fuzzy matching on a CSV file.
+
+    Args:
+    matching_field (str): Name of the field to perform matching on.
+    field_to_print (str): Name of the field to print in the output file.
+    input_file_path (str): Path to the input CSV file.
+    output_file_path (str): Path to the output CSV file.
+    matching_threshold (int, optional): Minimum score required to consider a match. Defaults to 70.
+    """
+
     def __init__(
         self,
         matching_field: str,
@@ -21,6 +32,12 @@ class Matching:
         output_file_path: str,
         matching_threshold: int = 70,
     ) -> None:
+        """
+        Initializes the DataMatcher object.
+
+        Raises:
+        FileNotFoundError: If the input file is not found.
+        """
         self.translator = Translator(to_lang="en", from_lang="autodetect")
         self.alphabet_detector = AlphabetDetector()
 
@@ -40,6 +57,16 @@ class Matching:
         self.output_file_path = output_file_path
 
     def translate_field(self, field_value: str) -> str:
+        """
+        Translates a field value from non-Latin script to Latin script if necessary.
+
+        Args:
+        field_value (str): The value of the field to translate.
+
+        Returns:
+        str: The translated field value, or the original field value if no translation was necessary.
+
+        """
         if not self.alphabet_detector.is_latin(field_value):
             translated_field = self.translator.translate(field_value)
             if "PLEASE SELECT TWO DISTINCT LANGUAGES" not in translated_field:
@@ -47,6 +74,17 @@ class Matching:
         return field_value
 
     def find_matches(self, value_for_matching: str, unmatched_dict: dict) -> list:
+        """
+        Finds all keys in a dictionary of string values that match a given string value within a certain threshold.
+
+        Args:
+        value_for_matching (str): The string value to match against.
+        unmatched_dict (dict): A dictionary of string values to search for matches.
+
+        Returns:
+        list: A list of keys from the unmatched_dict that match the value_for_matching within the given threshold.
+
+        """
         matches = []
         matched_data = process.extract(
             value_for_matching, unmatched_dict, scorer=fuzz.token_sort_ratio
@@ -57,15 +95,40 @@ class Matching:
         return matches
 
     def add_translated_values(self) -> None:
-        normalized_values = []
+        """
+        Adds translated values to the dataframe.
+
+        For each row in the dataframe, the value in the matching_field column is translated if necessary,
+        and the resulting value is added as a new column to the left of the original column.
+
+        Args:
+            self (object): The instance of the object.
+
+        Returns:
+            None: The function does not return any value.
+        """
+        translated_values = []
         for _index, row in self.df.iterrows():
-            normalized_value = self.translate_field(row[self.matching_field])
-            normalized_values.append(normalized_value)
-        self.df.insert(0, f"{self.matching_field} Normalized", normalized_values)
+            translated_value = self.translate_field(row[self.matching_field])
+            translated_values.append(translated_value)
+        self.df.insert(0, f"{self.matching_field} translated", translated_values)
 
     def matching(self) -> None:
+        """
+        Finds and sets the matches between the rows in the dataframe based on translated field.
+
+        This function uses the find_matches() function to compare the translated field of each row with the translated field of
+        the remaining rows to find the potential matches based on the similarity score. Then it sets the match column in the
+        dataframe as the index of the matched row.
+
+        Args:
+        None
+
+        Returns:
+        None
+        """
         matches_found = {}
-        new_field_name = f"{self.matching_field} Normalized"
+        new_field_name = f"{self.matching_field} translated"
         for index, row in self.df.iterrows():
             if index not in matches_found:
                 unmatched = self.df.query("index not in @matches_found.keys()")[
@@ -78,7 +141,11 @@ class Matching:
                     matches_found[match] = index
         self.df["Match"] = self.df["index"].map(matches_found)
 
-    def run_matching(self):
+    def run_matching(self) -> None:
+        """
+        Matches the similar values in the DataFrame and saves the matches in a file
+
+        """
         self.add_translated_values()
         self.matching()
         f = open(self.output_file_path, "w")
@@ -94,10 +161,10 @@ class Matching:
 
 
 if __name__ == "__main__":
-    matching = Matching(
+    data_matcher = DataMatcher(
         matching_field="Address",
         field_to_print="Name",
         input_file_path="/Users/mcpopova/Downloads/ResTecDevTask-sample_input_v1.csv",
         output_file_path="test.csv",
     )
-    matching.run_matching()
+    data_matcher.run_matching()
