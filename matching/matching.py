@@ -1,4 +1,5 @@
 import logging
+import sys
 
 import pandas as pd
 from alphabet_detector import AlphabetDetector
@@ -22,8 +23,17 @@ class Matching:
     ) -> None:
         self.translator = Translator(to_lang="en", from_lang="autodetect")
         self.alphabet_detector = AlphabetDetector()
-        df = pd.read_csv(input_file_path)
+
+        if ".csv" not in input_file_path:
+            logger.error("Your file needs to be csv")
+            sys.exit(1)
+        try:
+            df = pd.read_csv(input_file_path)
+        except FileNotFoundError:
+            logger.error("Please provide a valid input file")
+            sys.exit(1)
         self.df = df.reset_index()
+
         self.matching_field = matching_field
         self.field_to_print = field_to_print
         self.threshold = matching_threshold
