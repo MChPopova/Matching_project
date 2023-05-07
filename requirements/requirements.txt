@@ -1,3 +1,4 @@
 alphabet-detector
 thefuzz[speedup]
 translate
+pandas
