@@ -1,3 +1,4 @@
+import argparse
 import logging
 import sys
 
@@ -50,9 +51,19 @@ class DataMatcher:
             logger.error("Please provide a valid input file")
             sys.exit(1)
         self.df = df.reset_index()
-
-        self.matching_field = matching_field
-        self.field_to_print = field_to_print
+        if matching_field in df.columns:
+            self.matching_field = matching_field
+        else:
+            logger.error("Matching Field is not part of dataframe")
+            sys.exit(1)
+        if field_to_print in df.columns:
+            self.field_to_print = field_to_print
+        else:
+            logger.error("Print Field is not part of dataframe")
+            sys.exit(1)
+        assert (
+            matching_threshold > 0 and matching_threshold < 100
+        ), "threshold should be between 0 and 100"
         self.threshold = matching_threshold
         self.output_file_path = output_file_path
 
@@ -160,11 +171,32 @@ class DataMatcher:
         f.close()
 
 
+def parse_opts():
+    """Parse command line arguments.
+
+    Returns:
+        Namespace: an object containing the parsed arguments.
+    """
+    parser = argparse.ArgumentParser(
+        description="Matches data from a csv file using a particular field and saves the data to a new file"
+    )
+    parser.add_argument("input")
+    parser.add_argument("output")
+    parser.add_argument("-mf", "--match_field", default="Address")
+    parser.add_argument("-of", "--output_field", default="Name")
+    parser.add_argument("-t", "--threshold", default=70, type=int)
+
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
+    args = parse_opts()
+
     data_matcher = DataMatcher(
-        matching_field="Address",
-        field_to_print="Name",
-        input_file_path="/Users/mcpopova/Downloads/ResTecDevTask-sample_input_v1.csv",
-        output_file_path="test.csv",
+        matching_field=args.match_field,
+        field_to_print=args.output_field,
+        input_file_path=args.input,
+        output_file_path=args.output,
+        matching_threshold=args.threshold,
     )
     data_matcher.run_matching()
