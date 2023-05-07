@@ -37,6 +37,7 @@ class Matching:
         self.matching_field = matching_field
         self.field_to_print = field_to_print
         self.threshold = matching_threshold
+        self.output_file_path = output_file_path
 
     def translate_field(self, field_value: str) -> str:
         if not self.alphabet_detector.is_latin(field_value):
@@ -80,12 +81,16 @@ class Matching:
     def run_matching(self):
         self.add_translated_values()
         self.matching()
+        f = open(self.output_file_path, "w")
 
         for match in self.df.Match.unique():
             matched_data = ", ".join(
                 self.df[self.df["Match"] == match][self.field_to_print].to_list()
             )
+            f.write(f"{matched_data}\n")
             logger.info(matched_data)
+
+        f.close()
 
 
 if __name__ == "__main__":
@@ -93,6 +98,6 @@ if __name__ == "__main__":
         matching_field="Address",
         field_to_print="Name",
         input_file_path="/Users/mcpopova/Downloads/ResTecDevTask-sample_input_v1.csv",
-        output_file_path="",
+        output_file_path="test.csv",
     )
     matching.run_matching()
