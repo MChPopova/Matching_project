@@ -9,7 +9,7 @@ This repo consists of a source code of a Python script which takes an input file
 * The matching alforithm allows for customization on which field is used for matching, which field is printed in the output file as well as the threshold for something to be considered a match.
 
 ## Local environment setup
-
+Python 3.10 used for teh development of this project
 ### For development
 ```
 pip install -r requirements-dev.txt
